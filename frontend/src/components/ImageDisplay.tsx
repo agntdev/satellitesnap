@@ -1,7 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import type { Target } from "../types";
 import type { ImagerySource } from "../services/imagery";
-import MapView from "./MapView";
+
+// Code-split the Leaflet-backed map out of the initial bundle — it only loads
+// once a target is acquired, so first paint ships far less JavaScript.
+const MapView = lazy(() => import("./MapView"));
 
 export interface ImageDisplayProps {
   target: Target | null;
@@ -60,15 +63,23 @@ export default function ImageDisplay({
           </p>
         ) : (
           <div className="viewport__map">
-            <MapView
-              target={target}
-              source={source}
-              onTileError={() => {
-                setTileError(true);
-                setTilesLoading(false);
-              }}
-              onTilesLoaded={() => setTilesLoading(false)}
-            />
+            <Suspense
+              fallback={
+                <div className="mapview mapview--loading cursor">
+                  loading map engine
+                </div>
+              }
+            >
+              <MapView
+                target={target}
+                source={source}
+                onTileError={() => {
+                  setTileError(true);
+                  setTilesLoading(false);
+                }}
+                onTilesLoaded={() => setTilesLoading(false)}
+              />
+            </Suspense>
             {(busy || tilesLoading) && (
               <div className="viewport__overlay cursor">acquiring imagery</div>
             )}

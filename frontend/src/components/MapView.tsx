@@ -49,6 +49,8 @@ export default function MapView({
       maxZoom: ESRI_REFERENCE_OVERLAY.maxZoom,
       opacity: 0.85,
       pane: "overlayPane",
+      updateWhenIdle: true,
+      keepBuffer: 2,
     }).addTo(map);
 
     return () => {
@@ -70,6 +72,11 @@ export default function MapView({
     const layer = L.tileLayer(source.url, {
       maxZoom: source.maxZoom,
       attribution: source.attribution,
+      // Perf: fetch fewer tiles mid-gesture, keep a small off-screen buffer,
+      // and cross-fade so historical-layer swaps don't flash.
+      updateWhenIdle: true,
+      updateWhenZooming: false,
+      keepBuffer: 2,
     });
     layer.on("tileerror", () => onTileError?.());
     layer.on("load", () => onTilesLoaded?.());

@@ -9,6 +9,7 @@ import {
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  localStorage.clear();
 });
 
 const sampleConfig = {
@@ -60,5 +61,32 @@ describe("fetchWaybackReleases", () => {
     );
     const out = await fetchWaybackReleases();
     expect(out).toEqual(FALLBACK_RELEASES);
+  });
+
+  it("caches the catalogue so a second call skips the network", async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: true,
+      json: async () => sampleConfig,
+    }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const t0 = 1_000_000;
+    await fetchWaybackReleases(undefined, t0);
+    const second = await fetchWaybackReleases(undefined, t0 + 1000);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(second[0].date).toBe("2026-05-28");
+  });
+
+  it("refetches once the cache TTL expires", async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: true,
+      json: async () => sampleConfig,
+    }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const t0 = 1_000_000;
+    await fetchWaybackReleases(undefined, t0);
+    await fetchWaybackReleases(undefined, t0 + 25 * 60 * 60 * 1000); // > 1 day
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 });
