@@ -1,9 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import SearchBar from "./components/SearchBar";
 import ImageDisplay from "./components/ImageDisplay";
 import HistoryPanel from "./components/HistoryPanel";
+import TimeTravel from "./components/TimeTravel";
 import { geocode, GeocodeError } from "./services/geocode";
 import { historyService } from "./services/history";
+import {
+  fetchWaybackReleases,
+  waybackSource,
+  type WaybackRelease,
+} from "./services/wayback";
 import type { HistoryEntry, Target } from "./types";
 
 export default function App() {
@@ -12,6 +18,9 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [releases, setReleases] = useState<WaybackRelease[]>([]);
+  const [releasesLoading, setReleasesLoading] = useState(true);
+  const [releaseIndex, setReleaseIndex] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   // Load persisted history on mount.
@@ -27,6 +36,24 @@ export default function App() {
       live = false;
     };
   }, []);
+
+  // Load the imagery timeline (Esri Wayback releases) once.
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchWaybackReleases(controller.signal)
+      .then((r) => {
+        setReleases(r);
+        setReleasesLoading(false);
+      })
+      .catch(() => setReleasesLoading(false));
+    return () => controller.abort();
+  }, []);
+
+  // The selected historical imagery layer (newest by default).
+  const source = useMemo(
+    () => (releases.length ? waybackSource(releases[releaseIndex]) : undefined),
+    [releases, releaseIndex],
+  );
 
   async function recordTarget(next: Target) {
     try {
@@ -102,7 +129,22 @@ export default function App() {
       />
 
       <section className="app__body">
-        <ImageDisplay target={target} error={error} busy={busy} />
+        <ImageDisplay
+          target={target}
+          error={error}
+          busy={busy}
+          source={source}
+          footer={
+            target ? (
+              <TimeTravel
+                releases={releases}
+                index={releaseIndex}
+                onChange={setReleaseIndex}
+                loading={releasesLoading}
+              />
+            ) : null
+          }
+        />
         <HistoryPanel
           entries={history}
           onSelect={handleSelect}
