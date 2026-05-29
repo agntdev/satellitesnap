@@ -18,6 +18,15 @@ vi.mock("./components/MapView", () => ({
   ),
 }));
 
+// Avoid hitting the live Esri Wayback catalogue from tests.
+vi.mock("./services/wayback", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./services/wayback")>();
+  return {
+    ...actual,
+    fetchWaybackReleases: vi.fn(async () => actual.FALLBACK_RELEASES),
+  };
+});
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();

@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Target } from "../types";
+import type { ImagerySource } from "../services/imagery";
 import MapView from "./MapView";
 
 export interface ImageDisplayProps {
   target: Target | null;
   busy?: boolean;
   error?: string | null;
+  /** Imagery layer to render (defaults to latest Esri World Imagery). */
+  source?: ImagerySource;
+  /** Extra controls rendered beneath the map (e.g. the time-travel timeline). */
+  footer?: ReactNode;
 }
 
 /**
@@ -16,17 +21,19 @@ export default function ImageDisplay({
   target,
   busy = false,
   error = null,
+  source,
+  footer,
 }: ImageDisplayProps) {
   const [tilesLoading, setTilesLoading] = useState(false);
   const [tileError, setTileError] = useState(false);
 
-  // Reset tile status whenever the target changes.
+  // Reset tile status whenever the target or imagery source changes.
   useEffect(() => {
     if (target) {
       setTilesLoading(true);
       setTileError(false);
     }
-  }, [target?.lat, target?.lng]);
+  }, [target?.lat, target?.lng, source?.id]);
 
   return (
     <div className="window viewport">
@@ -52,6 +59,7 @@ export default function ImageDisplay({
           <div className="viewport__map">
             <MapView
               target={target}
+              source={source}
               onTileError={() => {
                 setTileError(true);
                 setTilesLoading(false);
@@ -70,6 +78,7 @@ export default function ImageDisplay({
               <span className="text-dim">lat</span> {target.lat.toFixed(5)}{" "}
               <span className="text-dim">lng</span> {target.lng.toFixed(5)}
             </div>
+            {footer}
           </div>
         )}
       </div>
