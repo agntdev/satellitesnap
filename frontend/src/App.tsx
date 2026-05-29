@@ -4,6 +4,8 @@ import ImageDisplay from "./components/ImageDisplay";
 import HistoryPanel from "./components/HistoryPanel";
 import TimeTravel from "./components/TimeTravel";
 import ShareButton from "./components/ShareButton";
+import MetadataPanel from "./components/MetadataPanel";
+import { buildMetadata } from "./services/metadata";
 import { geocode, GeocodeError } from "./services/geocode";
 import { historyService } from "./services/history";
 import {
@@ -85,6 +87,7 @@ export default function App() {
   );
 
   const selectedDate = releases[releaseIndex]?.date;
+  const DEFAULT_ZOOM = 17;
 
   // Keep the address bar in sync so the current view is always shareable.
   useEffect(() => {
@@ -169,6 +172,18 @@ export default function App() {
           error={error}
           busy={busy}
           source={source}
+          overlay={
+            target ? (
+              <MetadataPanel
+                metadata={buildMetadata(
+                  target,
+                  source,
+                  selectedDate,
+                  DEFAULT_ZOOM,
+                )}
+              />
+            ) : null
+          }
           footer={
             target ? (
               <div className="viewport__tools">
