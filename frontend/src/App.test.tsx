@@ -3,6 +3,17 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
+// Leaflet drives real DOM/canvas work that jsdom can't host; the map itself is
+// covered by the production build and the e2e suite. Stub it so the integration
+// tests stay focused on App's state wiring.
+vi.mock("./components/MapView", () => ({
+  default: ({ target }: { target: { lat: number; lng: number } }) => (
+    <div data-testid="mapview-stub">
+      map @ {target.lat},{target.lng}
+    </div>
+  ),
+}));
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
