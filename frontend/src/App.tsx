@@ -5,6 +5,7 @@ import HistoryPanel from "./components/HistoryPanel";
 import TimeTravel from "./components/TimeTravel";
 import ShareButton from "./components/ShareButton";
 import MetadataPanel from "./components/MetadataPanel";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 import { buildMetadata } from "./services/metadata";
 import { geocode, GeocodeError } from "./services/geocode";
 import { historyService } from "./services/history";
@@ -14,12 +15,23 @@ import {
   type WaybackRelease,
 } from "./services/wayback";
 import { buildShareUrl, parsePermalink } from "./services/permalink";
+import { useI18n, type TranslationKey } from "./i18n";
 import type { HistoryEntry, Target } from "./types";
 
+/**
+ * An error held as a translation key (+ params) rather than a baked
+ * string, so it re-localizes live when the user switches language.
+ */
+interface AppError {
+  key: TranslationKey;
+  params?: Record<string, string | number>;
+}
+
 export default function App() {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [target, setTarget] = useState<Target | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [releases, setReleases] = useState<WaybackRelease[]>([]);
@@ -126,8 +138,8 @@ export default function App() {
       }
       setError(
         err instanceof GeocodeError
-          ? err.message
-          : "unexpected error while resolving location",
+          ? { key: `error.${err.code}` as TranslationKey, params: err.params }
+          : { key: "error.unexpected" },
       );
     } finally {
       if (abortRef.current === controller) setBusy(false);
@@ -140,7 +152,7 @@ export default function App() {
 
   function handleLocate() {
     if (!navigator.geolocation) {
-      setError("geolocation is not available in this browser");
+      setError({ key: "error.noGeolocation" });
       return;
     }
     setBusy(true);
@@ -154,11 +166,12 @@ export default function App() {
       },
       (err) => {
         setBusy(false);
-        setError(
-          err.code === err.PERMISSION_DENIED
-            ? "location permission denied"
-            : "could not determine your location",
-        );
+        setError({
+          key:
+            err.code === err.PERMISSION_DENIED
+              ? "error.geoDenied"
+              : "error.geoFailed",
+        });
       },
       { enableHighAccuracy: true, timeout: 10_000 },
     );
@@ -173,16 +186,19 @@ export default function App() {
     }
   }
 
+  const errorText = error ? t(error.key, error.params) : null;
+
   return (
     <main className="app">
       <header className="app__header">
-        <h1 className="app__title">
-          <span className="app__prompt">$</span>
-          <span className="cursor">satellitesnap</span>
-        </h1>
-        <p className="app__tagline">
-          freshest satellite imagery for any address or coordinates
-        </p>
+        <div className="app__bar">
+          <h1 className="app__title">
+            <span className="app__prompt">$</span>
+            <span className="cursor">satellitesnap</span>
+          </h1>
+          <LanguageSwitcher />
+        </div>
+        <p className="app__tagline">{t("tagline")}</p>
       </header>
 
       <SearchBar
@@ -196,18 +212,18 @@ export default function App() {
       {/* Polite status line for assistive tech. */}
       <p className="app__status" role="status" aria-live="polite">
         {busy
-          ? "acquiring imagery…"
-          : error
-            ? error
+          ? t("status.acquiring")
+          : errorText
+            ? errorText
             : target
-              ? `target: ${target.label}`
+              ? t("status.target", { label: target.label })
               : ""}
       </p>
 
       <section className="app__body">
         <ImageDisplay
           target={target}
-          error={error}
+          error={errorText}
           busy={busy}
           source={source}
           onZoomChange={setZoom}
@@ -245,16 +261,16 @@ export default function App() {
       </section>
 
       <footer className="app__footer text-dim">
-        <span>imagery: Esri World Imagery + Wayback</span>
+        <span>{t("footer.imagery")}</span>
         <span>·</span>
-        <span>geocoding: OpenStreetMap Nominatim</span>
+        <span>{t("footer.geocoding")}</span>
         <span>·</span>
         <a
           href="https://github.com/agntdev/satellitesnap"
           target="_blank"
           rel="noreferrer"
         >
-          source
+          {t("footer.source")}
         </a>
       </footer>
     </main>

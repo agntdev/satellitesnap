@@ -16,6 +16,48 @@
   gap: var(--sp-1);
 }
 
+.app__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.lang-switch {
+  display: inline-flex;
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.lang-switch__btn {
+  background: transparent;
+  border: 0;
+  color: var(--c-fg-dim);
+  font: inherit;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  padding: var(--sp-1) var(--sp-2);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.lang-switch__btn + .lang-switch__btn {
+  border-left: 1px solid var(--c-border);
+}
+
+.lang-switch__btn:hover {
+  color: var(--c-fg);
+}
+
+.lang-switch__btn.is-active {
+  background: var(--c-accent);
+  color: var(--c-bg);
+}
+
 .app__title {
   font-size: var(--fs-xl);
   margin: 0;

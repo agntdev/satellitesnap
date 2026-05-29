@@ -1,4 +1,5 @@
 import type { HistoryEntry } from "../types";
+import { useI18n, type Locale } from "../i18n";
 
 export interface HistoryPanelProps {
   entries: HistoryEntry[];
@@ -6,9 +7,9 @@ export interface HistoryPanelProps {
   onClear: () => void;
 }
 
-function formatTime(ms: number): string {
+function formatTime(ms: number, locale: Locale): string {
   const d = new Date(ms);
-  return d.toLocaleString(undefined, {
+  return d.toLocaleString(locale, {
     month: "short",
     day: "2-digit",
     hour: "2-digit",
@@ -21,24 +22,25 @@ export default function HistoryPanel({
   onSelect,
   onClear,
 }: HistoryPanelProps) {
+  const { t, locale } = useI18n();
   return (
-    <aside className="window history" aria-label="search history">
+    <aside className="window history" aria-label={t("history.aria")}>
       <div className="window__bar">
-        <span>history</span>
+        <span>{t("history.title")}</span>
         {entries.length > 0 && (
           <button
             className="history__clear"
             type="button"
             onClick={onClear}
-            aria-label="clear history"
+            aria-label={t("history.clearAria")}
           >
-            clear
+            {t("history.clear")}
           </button>
         )}
       </div>
       <div className="window__body history__body">
         {entries.length === 0 ? (
-          <p className="text-dim history__empty">// no recent scans</p>
+          <p className="text-dim history__empty">{t("history.empty")}</p>
         ) : (
           <ul className="history__list">
             {entries.map((entry) => (
@@ -51,7 +53,7 @@ export default function HistoryPanel({
                 >
                   <span className="history__label">{entry.label}</span>
                   <span className="history__time text-dim">
-                    {formatTime(entry.searchedAt)}
+                    {formatTime(entry.searchedAt, locale)}
                   </span>
                 </button>
               </li>

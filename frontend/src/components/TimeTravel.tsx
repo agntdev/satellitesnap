@@ -1,4 +1,5 @@
 import type { WaybackRelease } from "../services/wayback";
+import { useI18n } from "../i18n";
 
 export interface TimeTravelProps {
   releases: WaybackRelease[];
@@ -18,10 +19,11 @@ export default function TimeTravel({
   onChange,
   loading = false,
 }: TimeTravelProps) {
+  const { t } = useI18n();
   if (loading) {
     return (
       <div className="timetravel timetravel--loading text-dim cursor">
-        loading imagery timeline
+        {t("timetravel.loading")}
       </div>
     );
   }
@@ -33,12 +35,14 @@ export default function TimeTravel({
   const isLatest = clamped === 0;
 
   return (
-    <div className="timetravel" role="group" aria-label="time travel">
+    <div className="timetravel" role="group" aria-label={t("timetravel.group")}>
       <div className="timetravel__head">
-        <span className="label">time-travel</span>
+        <span className="label">{t("timetravel.label")}</span>
         <span className="timetravel__date text-accent">
           {current.date}
-          {isLatest && <span className="timetravel__badge"> · latest</span>}
+          {isLatest && (
+            <span className="timetravel__badge">{t("timetravel.latest")}</span>
+          )}
         </span>
       </div>
       <div className="timetravel__row">
@@ -47,7 +51,7 @@ export default function TimeTravel({
           type="button"
           onClick={() => onChange(clamped - 1)}
           disabled={clamped <= 0}
-          aria-label="newer imagery"
+          aria-label={t("timetravel.newer")}
         >
           ◂
         </button>
@@ -57,7 +61,7 @@ export default function TimeTravel({
           min={0}
           max={max}
           value={clamped}
-          aria-label="imagery release"
+          aria-label={t("timetravel.release")}
           aria-valuetext={current.date}
           onChange={(e) => onChange(Number(e.target.value))}
         />
@@ -66,13 +70,17 @@ export default function TimeTravel({
           type="button"
           onClick={() => onChange(clamped + 1)}
           disabled={clamped >= max}
-          aria-label="older imagery"
+          aria-label={t("timetravel.older")}
         >
           ▸
         </button>
       </div>
       <p className="timetravel__hint text-dim">
-        {releases.length} releases · {releases[max].date} → {releases[0].date}
+        {t("timetravel.hint", {
+          count: releases.length,
+          from: releases[max].date,
+          to: releases[0].date,
+        })}
       </p>
     </div>
   );

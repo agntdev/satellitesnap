@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useI18n } from "../i18n";
 
 export interface SearchBarProps {
   /** Called with the raw query string when the user submits. */
@@ -19,6 +20,7 @@ export default function SearchBar({
   onChange,
   onLocate,
 }: SearchBarProps) {
+  const { t } = useI18n();
   const [internal, setInternal] = useState("");
   const controlled = value !== undefined;
   const query = controlled ? value : internal;
@@ -38,7 +40,7 @@ export default function SearchBar({
   return (
     <form className="searchbar" onSubmit={handleSubmit} role="search">
       <label className="label" htmlFor="search-input">
-        target &mdash; address or lat,lng
+        {t("search.label")}
       </label>
       <div className="searchbar__row">
         <input
@@ -47,7 +49,7 @@ export default function SearchBar({
           type="text"
           autoComplete="off"
           spellCheck={false}
-          placeholder="1600 Amphitheatre Pkwy  ·  37.4220,-122.0841"
+          placeholder={t("search.placeholder")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           disabled={busy}
@@ -58,14 +60,14 @@ export default function SearchBar({
             type="button"
             onClick={onLocate}
             disabled={busy}
-            aria-label="use my location"
-            title="use my location"
+            aria-label={t("search.locate")}
+            title={t("search.locate")}
           >
             ⌖
           </button>
         )}
         <button className="btn" type="submit" disabled={busy || !query.trim()}>
-          {busy ? "scanning…" : "snap ⮐"}
+          {busy ? t("search.scanning") : t("search.submit")}
         </button>
       </div>
     </form>
