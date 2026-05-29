@@ -5,6 +5,7 @@ import { MemoryHistoryStore } from "./history/memoryStore.js";
 import { PgHistoryStore } from "./history/pgStore.js";
 import type { HistoryStore } from "./history/store.js";
 import { getPool, hasDatabase } from "./db.js";
+import { requestLogger } from "./logging.js";
 
 export interface AppDeps {
   /** Override the history store (tests inject an in-memory one). */
@@ -24,6 +25,7 @@ export function createApp(deps: AppDeps = {}): Express {
   const app = express();
   const historyStore = deps.historyStore ?? defaultHistoryStore();
 
+  app.use(requestLogger);
   app.use(cors({ origin: process.env.CORS_ORIGIN ?? "*" }));
   app.use(express.json());
 

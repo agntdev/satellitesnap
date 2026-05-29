@@ -13,6 +13,7 @@ image metadata, keep a search history, and share a permalink to any view.
 - 📖 [User Guide](docs/USER_GUIDE.md) — how to use every feature
 - 🛠️ [Developer Guide](docs/DEVELOPER_GUIDE.md) — architecture, setup, API, testing
 - 🚀 [Deployment](deploy/README.md) — Pages + container + config
+- 📡 [Operations & Monitoring](docs/OPERATIONS.md) — deploy, smoke checks, incident playbook
 - ✅ [Testing](e2e/README.md) — the three test layers
 
 ## Architecture
