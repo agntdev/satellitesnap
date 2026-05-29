@@ -1,7 +1,11 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 // Leaflet drives real DOM/canvas work that jsdom can't host; the map itself is
 // covered by the production build and the e2e suite. Stub it so the integration
