@@ -75,15 +75,52 @@ export function parseConfig(raw: Record<string, ConfigEntry>): WaybackRelease[] 
   return releases;
 }
 
-/** Fetch the live Wayback catalogue, falling back to the bundled list. */
+const CACHE_KEY = "satellitesnap.wayback.v1";
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 1 day
+
+function readCache(now: number): WaybackRelease[] | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const { at, releases } = JSON.parse(raw) as {
+      at: number;
+      releases: WaybackRelease[];
+    };
+    if (now - at > CACHE_TTL_MS || !Array.isArray(releases) || !releases.length) {
+      return null;
+    }
+    return releases;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(now: number, releases: WaybackRelease[]): void {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ at: now, releases }));
+  } catch {
+    /* storage unavailable — caching is best-effort */
+  }
+}
+
+/**
+ * Fetch the live Wayback catalogue, falling back to the bundled list. Results
+ * are cached in localStorage for a day so repeat visits skip the (large)
+ * catalogue download entirely.
+ */
 export async function fetchWaybackReleases(
   signal?: AbortSignal,
+  now: number = Date.now(),
 ): Promise<WaybackRelease[]> {
+  const cached = readCache(now);
+  if (cached) return cached;
   try {
     const res = await fetch(CONFIG_URL, { signal });
     if (!res.ok) throw new Error(`wayback config ${res.status}`);
     const parsed = parseConfig(await res.json());
-    return parsed.length > 0 ? parsed : FALLBACK_RELEASES;
+    const releases = parsed.length > 0 ? parsed : FALLBACK_RELEASES;
+    writeCache(now, releases);
+    return releases;
   } catch (err) {
     if ((err as Error).name === "AbortError") throw err;
     return FALLBACK_RELEASES;

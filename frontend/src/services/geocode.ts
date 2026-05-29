@@ -73,6 +73,15 @@ async function geocodeAddress(
  * Resolve any query (coordinates or address) to a {@link Target}.
  * @throws {GeocodeError} on empty input, no match, or upstream failure.
  */
+// Cache resolved addresses for the session so repeat lookups (history clicks,
+// re-searching the same place) are instant and don't re-hit Nominatim, whose
+// usage policy discourages redundant requests.
+const addressCache = new Map<string, Target>();
+
+export function _clearGeocodeCache(): void {
+  addressCache.clear();
+}
+
 export async function geocode(
   query: string,
   signal?: AbortSignal,
@@ -83,5 +92,11 @@ export async function geocode(
   const coords = parseCoordinates(trimmed);
   if (coords) return coords;
 
-  return geocodeAddress(trimmed, signal);
+  const key = trimmed.toLowerCase();
+  const cached = addressCache.get(key);
+  if (cached) return cached;
+
+  const result = await geocodeAddress(trimmed, signal);
+  addressCache.set(key, result);
+  return result;
 }

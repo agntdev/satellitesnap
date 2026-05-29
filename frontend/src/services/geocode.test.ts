@@ -1,9 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { geocode, GeocodeError, parseCoordinates } from "./geocode";
+import {
+  _clearGeocodeCache,
+  geocode,
+  GeocodeError,
+  parseCoordinates,
+} from "./geocode";
 
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  _clearGeocodeCache();
 });
 
 describe("parseCoordinates", () => {
@@ -68,5 +74,20 @@ describe("geocode", () => {
 
   it("rejects empty input", async () => {
     await expect(geocode("   ")).rejects.toBeInstanceOf(GeocodeError);
+  });
+
+  it("caches address lookups so repeats skip the network", async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: true,
+      json: async () => [
+        { lat: "59.9133", lon: "10.7389", display_name: "Oslo, Norway" },
+      ],
+    }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const a = await geocode("Oslo");
+    const b = await geocode("  oslo  "); // different casing/spacing
+    expect(b).toEqual(a);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });
