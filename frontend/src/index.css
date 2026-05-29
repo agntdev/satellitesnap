@@ -151,6 +151,16 @@
   margin: var(--sp-2) 0 0;
   font-size: var(--fs-xs);
 }
+
+/* ---- viewport tools (time-travel + share) ------------------------------ */
+.viewport__tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.share-btn {
+  align-self: flex-start;
+}
 .viewport__overlay {
   position: absolute;
   top: var(--sp-3);

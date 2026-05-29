@@ -3,6 +3,7 @@ import SearchBar from "./components/SearchBar";
 import ImageDisplay from "./components/ImageDisplay";
 import HistoryPanel from "./components/HistoryPanel";
 import TimeTravel from "./components/TimeTravel";
+import ShareButton from "./components/ShareButton";
 import { geocode, GeocodeError } from "./services/geocode";
 import { historyService } from "./services/history";
 import {
@@ -10,6 +11,7 @@ import {
   waybackSource,
   type WaybackRelease,
 } from "./services/wayback";
+import { buildShareUrl, parsePermalink } from "./services/permalink";
 import type { HistoryEntry, Target } from "./types";
 
 export default function App() {
@@ -22,6 +24,17 @@ export default function App() {
   const [releasesLoading, setReleasesLoading] = useState(true);
   const [releaseIndex, setReleaseIndex] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
+  // A release date requested via permalink, applied once the timeline loads.
+  const pendingDateRef = useRef<string | null>(null);
+
+  function applyTarget(next: Target, record = true) {
+    abortRef.current?.abort();
+    setTarget(next);
+    setError(null);
+    setBusy(false);
+    setQuery(next.label);
+    if (record) void recordTarget(next);
+  }
 
   // Load persisted history on mount.
   useEffect(() => {
@@ -37,6 +50,16 @@ export default function App() {
     };
   }, []);
 
+  // Restore a shared view from the URL on first load.
+  useEffect(() => {
+    const state = parsePermalink(window.location.search);
+    if (state) {
+      pendingDateRef.current = state.date ?? null;
+      applyTarget(state.target);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Load the imagery timeline (Esri Wayback releases) once.
   useEffect(() => {
     const controller = new AbortController();
@@ -44,6 +67,12 @@ export default function App() {
       .then((r) => {
         setReleases(r);
         setReleasesLoading(false);
+        // Honour a permalinked date now that we know the available releases.
+        if (pendingDateRef.current) {
+          const idx = r.findIndex((rel) => rel.date === pendingDateRef.current);
+          if (idx >= 0) setReleaseIndex(idx);
+          pendingDateRef.current = null;
+        }
       })
       .catch(() => setReleasesLoading(false));
     return () => controller.abort();
@@ -54,6 +83,18 @@ export default function App() {
     () => (releases.length ? waybackSource(releases[releaseIndex]) : undefined),
     [releases, releaseIndex],
   );
+
+  const selectedDate = releases[releaseIndex]?.date;
+
+  // Keep the address bar in sync so the current view is always shareable.
+  useEffect(() => {
+    if (!target) return;
+    const url = buildShareUrl(
+      { target, date: selectedDate },
+      window.location.href,
+    );
+    window.history.replaceState(null, "", url);
+  }, [target, selectedDate]);
 
   async function recordTarget(next: Target) {
     try {
@@ -91,13 +132,7 @@ export default function App() {
   }
 
   function handleSelect(entry: HistoryEntry) {
-    abortRef.current?.abort();
-    const next: Target = { lat: entry.lat, lng: entry.lng, label: entry.label };
-    setQuery(entry.label);
-    setError(null);
-    setBusy(false);
-    setTarget(next);
-    void recordTarget(next);
+    applyTarget({ lat: entry.lat, lng: entry.lng, label: entry.label });
   }
 
   async function handleClear() {
@@ -136,12 +171,20 @@ export default function App() {
           source={source}
           footer={
             target ? (
-              <TimeTravel
-                releases={releases}
-                index={releaseIndex}
-                onChange={setReleaseIndex}
-                loading={releasesLoading}
-              />
+              <div className="viewport__tools">
+                <TimeTravel
+                  releases={releases}
+                  index={releaseIndex}
+                  onChange={setReleaseIndex}
+                  loading={releasesLoading}
+                />
+                <ShareButton
+                  url={buildShareUrl(
+                    { target, date: selectedDate },
+                    window.location.href,
+                  )}
+                />
+              </div>
             ) : null
           }
         />
