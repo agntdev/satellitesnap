@@ -47,5 +47,97 @@
 @media (min-width: 52rem) {
   .app__body {
     grid-template-columns: minmax(0, 2fr) minmax(14rem, 1fr);
+    align-items: start;
   }
+}
+
+/* ---- SearchBar ---------------------------------------------------------- */
+.searchbar__row {
+  display: flex;
+  gap: var(--sp-2);
+}
+.searchbar__row .input {
+  flex: 1;
+}
+@media (max-width: 32rem) {
+  .searchbar__row {
+    flex-direction: column;
+  }
+}
+
+/* ---- ImageDisplay / viewport ------------------------------------------- */
+.viewport__body {
+  min-height: 18rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.viewport__msg {
+  margin: 0;
+  max-width: 34ch;
+}
+.viewport__msg--error {
+  color: var(--c-red);
+}
+.viewport__coords {
+  font-size: var(--fs-lg);
+  letter-spacing: 0.04em;
+}
+
+/* ---- HistoryPanel ------------------------------------------------------- */
+.history__clear {
+  margin-left: auto;
+  font: inherit;
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--c-fg-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.history__clear:hover {
+  color: var(--c-red);
+}
+.history__body {
+  padding: var(--sp-2);
+}
+.history__empty {
+  margin: var(--sp-2);
+}
+.history__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.history__item {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  color: var(--c-fg);
+  font: inherit;
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.history__item:hover,
+.history__item:focus-visible {
+  background: var(--c-bg-panel-2);
+  border-left-color: var(--c-accent);
+  outline: none;
+}
+.history__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history__time {
+  font-size: var(--fs-xs);
 }
