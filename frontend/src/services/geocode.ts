@@ -12,7 +12,34 @@ import type { Target } from "../types";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 
-export class GeocodeError extends Error {}
+/** Stable, locale-independent reason a geocode failed. */
+export type GeocodeErrorCode =
+  | "empty"
+  | "noMatch"
+  | "network"
+  | "http"
+  | "malformed";
+
+/**
+ * A geocoding failure. Carries a stable {@link GeocodeErrorCode} plus
+ * optional interpolation params so the UI can render a localized message
+ * (the English `message` is kept as a fallback for logs/tests).
+ */
+export class GeocodeError extends Error {
+  readonly code: GeocodeErrorCode;
+  readonly params?: Record<string, string | number>;
+
+  constructor(
+    code: GeocodeErrorCode,
+    message: string,
+    params?: Record<string, string | number>,
+  ) {
+    super(message);
+    this.name = "GeocodeError";
+    this.code = code;
+    this.params = params;
+  }
+}
 
 const COORD_RE = /^\s*@?\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/;
 
@@ -48,23 +75,23 @@ async function geocodeAddress(
     });
   } catch (err) {
     if ((err as Error).name === "AbortError") throw err;
-    throw new GeocodeError("network error while geocoding — check connection");
+    throw new GeocodeError("network", "network error while geocoding — check connection");
   }
 
   if (!res.ok) {
-    throw new GeocodeError(`geocoder returned ${res.status}`);
+    throw new GeocodeError("http", `geocoder returned ${res.status}`, { status: res.status });
   }
 
   const data = (await res.json()) as NominatimResult[];
   if (!Array.isArray(data) || data.length === 0) {
-    throw new GeocodeError(`no match for "${query}"`);
+    throw new GeocodeError("noMatch", `no match for "${query}"`, { query });
   }
 
   const top = data[0];
   const lat = Number(top.lat);
   const lng = Number(top.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    throw new GeocodeError("geocoder returned malformed coordinates");
+    throw new GeocodeError("malformed", "geocoder returned malformed coordinates");
   }
   return { lat, lng, label: top.display_name || query };
 }
@@ -87,7 +114,7 @@ export async function geocode(
   signal?: AbortSignal,
 ): Promise<Target> {
   const trimmed = query.trim();
-  if (!trimmed) throw new GeocodeError("enter an address or coordinates");
+  if (!trimmed) throw new GeocodeError("empty", "enter an address or coordinates");
 
   const coords = parseCoordinates(trimmed);
   if (coords) return coords;

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useI18n } from "../i18n";
 
 export interface ShareButtonProps {
   /** Absolute URL to share. */
@@ -7,6 +8,7 @@ export interface ShareButtonProps {
 
 /** Copies a permalink to the clipboard with transient "copied" feedback. */
 export default function ShareButton({ url }: ShareButtonProps) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -36,9 +38,9 @@ export default function ShareButton({ url }: ShareButtonProps) {
       className="btn share-btn"
       type="button"
       onClick={copy}
-      aria-label="copy shareable link"
+      aria-label={t("share.aria")}
     >
-      {copied ? "link copied ✓" : "share ⎘"}
+      {copied ? t("share.copied") : t("share.copy")}
     </button>
   );
 }
