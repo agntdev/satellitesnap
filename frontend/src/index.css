@@ -161,6 +161,52 @@
 .share-btn {
   align-self: flex-start;
 }
+
+/* ---- MetadataPanel (overlay) ------------------------------------------- */
+.viewport__meta-slot {
+  position: absolute;
+  top: var(--sp-3);
+  right: var(--sp-3);
+  z-index: 500;
+  max-width: min(22rem, 80%);
+}
+.metadata {
+  background: rgba(5, 8, 10, 0.9);
+  border: 1px solid var(--c-border-bright);
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+}
+.metadata__toggle {
+  font: inherit;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--c-accent);
+  padding: var(--sp-1) var(--sp-2);
+  cursor: pointer;
+}
+.metadata__list {
+  margin: 0;
+  padding: var(--sp-2);
+  border-top: 1px solid var(--c-border);
+  display: grid;
+  gap: var(--sp-1);
+}
+.metadata__row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: var(--sp-2);
+}
+.metadata__key {
+  text-transform: uppercase;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+}
+.metadata__val {
+  margin: 0;
+  word-break: break-word;
+}
 .viewport__overlay {
   position: absolute;
   top: var(--sp-3);

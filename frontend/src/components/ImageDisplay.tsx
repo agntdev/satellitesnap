@@ -11,6 +11,8 @@ export interface ImageDisplayProps {
   source?: ImagerySource;
   /** Extra controls rendered beneath the map (e.g. the time-travel timeline). */
   footer?: ReactNode;
+  /** Content overlaid on the imagery (e.g. the metadata panel). */
+  overlay?: ReactNode;
 }
 
 /**
@@ -23,6 +25,7 @@ export default function ImageDisplay({
   error = null,
   source,
   footer,
+  overlay,
 }: ImageDisplayProps) {
   const [tilesLoading, setTilesLoading] = useState(false);
   const [tileError, setTileError] = useState(false);
@@ -74,6 +77,7 @@ export default function ImageDisplay({
                 ✗ imagery tiles failed to load
               </div>
             )}
+            {overlay && <div className="viewport__meta-slot">{overlay}</div>}
             <div className="viewport__coords">
               <span className="text-dim">lat</span> {target.lat.toFixed(5)}{" "}
               <span className="text-dim">lng</span> {target.lng.toFixed(5)}
