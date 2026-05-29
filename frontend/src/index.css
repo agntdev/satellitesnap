@@ -43,6 +43,22 @@
   margin: 0;
 }
 
+.app__status {
+  margin: 0;
+  min-height: 1.2em;
+  font-size: var(--fs-sm);
+  color: var(--c-fg-dim);
+}
+
+.app__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--c-border);
+}
+
 /* Single-column stack on narrow screens, room for a sidebar on wide ones. */
 @media (min-width: 52rem) {
   .app__body {
@@ -58,6 +74,12 @@
 }
 .searchbar__row .input {
   flex: 1;
+}
+.searchbar__locate {
+  flex: 0 0 auto;
+  font-size: var(--fs-lg);
+  line-height: 1;
+  padding: var(--sp-2) var(--sp-3);
 }
 @media (max-width: 32rem) {
   .searchbar__row {
@@ -96,6 +118,12 @@
   background: #000;
   border-radius: var(--radius);
   overflow: hidden;
+}
+.mapview--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-fg-dim);
 }
 @media (max-width: 32rem) {
   .mapview {
