@@ -16,6 +16,7 @@ export const ru: Record<keyof typeof en, string> = {
   "search.locate": "определить моё местоположение",
   "search.submit": "снимок ⮐",
   "search.scanning": "сканирование…",
+  "search.suggestions": "подсказки адресов",
 
   "status.acquiring": "получение снимков…",
   "status.target": "цель: {label}",

@@ -206,6 +206,7 @@ export default function App() {
         onChange={setQuery}
         onSearch={handleSearch}
         onLocate={handleLocate}
+        onPick={(s) => applyTarget({ lat: s.lat, lng: s.lng, label: s.label })}
         busy={busy}
       />
 

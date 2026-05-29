@@ -114,8 +114,56 @@
   display: flex;
   gap: var(--sp-2);
 }
-.searchbar__row .input {
+.searchbar__combo {
   flex: 1;
+  position: relative;
+}
+.searchbar__combo .input {
+  width: 100%;
+}
+.searchbar__suggestions {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  max-height: 16rem;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+}
+.searchbar__suggestion {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+}
+.searchbar__suggestion.is-active,
+.searchbar__suggestion:hover {
+  background: var(--c-accent);
+  color: var(--c-bg);
+}
+.searchbar__suggestion.is-active .text-dim,
+.searchbar__suggestion:hover .text-dim {
+  color: var(--c-bg);
+}
+.searchbar__suggestion-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.searchbar__suggestion-kind {
+  flex: 0 0 auto;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.04em;
 }
 .searchbar__locate {
   flex: 0 0 auto;

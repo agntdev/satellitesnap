@@ -17,6 +17,7 @@ export const en = {
   "search.locate": "use my location",
   "search.submit": "snap ⮐",
   "search.scanning": "scanning…",
+  "search.suggestions": "address suggestions",
 
   "status.acquiring": "acquiring imagery…",
   "status.target": "target: {label}",
