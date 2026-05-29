@@ -16,6 +16,8 @@ export interface MapViewProps {
   onTileError?: () => void;
   /** Fired once the base imagery tiles have loaded for the current view. */
   onTilesLoaded?: () => void;
+  /** Fired with the current zoom level after the user zooms. */
+  onZoomChange?: (zoom: number) => void;
 }
 
 /**
@@ -29,6 +31,7 @@ export default function MapView({
   source = ESRI_WORLD_IMAGERY,
   onTileError,
   onTilesLoaded,
+  onZoomChange,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -52,6 +55,8 @@ export default function MapView({
       updateWhenIdle: true,
       keepBuffer: 2,
     }).addTo(map);
+
+    map.on("zoomend", () => onZoomChange?.(map.getZoom()));
 
     return () => {
       map.remove();

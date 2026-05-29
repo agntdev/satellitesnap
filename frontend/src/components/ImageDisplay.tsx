@@ -16,6 +16,8 @@ export interface ImageDisplayProps {
   footer?: ReactNode;
   /** Content overlaid on the imagery (e.g. the metadata panel). */
   overlay?: ReactNode;
+  /** Fired with the live zoom level as the user zooms the map. */
+  onZoomChange?: (zoom: number) => void;
 }
 
 /**
@@ -29,6 +31,7 @@ export default function ImageDisplay({
   source,
   footer,
   overlay,
+  onZoomChange,
 }: ImageDisplayProps) {
   const [tilesLoading, setTilesLoading] = useState(false);
   const [tileError, setTileError] = useState(false);
@@ -78,6 +81,7 @@ export default function ImageDisplay({
                   setTilesLoading(false);
                 }}
                 onTilesLoaded={() => setTilesLoading(false)}
+                onZoomChange={onZoomChange}
               />
             </Suspense>
             {(busy || tilesLoading) && (

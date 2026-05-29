@@ -8,6 +8,8 @@ export interface SearchBarProps {
   /** Controlled value, so parent flows (history clicks, permalinks) can prefill. */
   value?: string;
   onChange?: (value: string) => void;
+  /** Invoked when the user asks to use their current location. */
+  onLocate?: () => void;
 }
 
 export default function SearchBar({
@@ -15,6 +17,7 @@ export default function SearchBar({
   busy = false,
   value,
   onChange,
+  onLocate,
 }: SearchBarProps) {
   const [internal, setInternal] = useState("");
   const controlled = value !== undefined;
@@ -49,6 +52,18 @@ export default function SearchBar({
           onChange={(e) => setQuery(e.target.value)}
           disabled={busy}
         />
+        {onLocate && (
+          <button
+            className="btn searchbar__locate"
+            type="button"
+            onClick={onLocate}
+            disabled={busy}
+            aria-label="use my location"
+            title="use my location"
+          >
+            ⌖
+          </button>
+        )}
         <button className="btn" type="submit" disabled={busy || !query.trim()}>
           {busy ? "scanning…" : "snap ⮐"}
         </button>

@@ -25,6 +25,7 @@ export default function App() {
   const [releases, setReleases] = useState<WaybackRelease[]>([]);
   const [releasesLoading, setReleasesLoading] = useState(true);
   const [releaseIndex, setReleaseIndex] = useState(0);
+  const [zoom, setZoom] = useState(17);
   const abortRef = useRef<AbortController | null>(null);
   // A release date requested via permalink, applied once the timeline loads.
   const pendingDateRef = useRef<string | null>(null);
@@ -87,7 +88,6 @@ export default function App() {
   );
 
   const selectedDate = releases[releaseIndex]?.date;
-  const DEFAULT_ZOOM = 17;
 
   // Keep the address bar in sync so the current view is always shareable.
   useEffect(() => {
@@ -138,6 +138,32 @@ export default function App() {
     applyTarget({ lat: entry.lat, lng: entry.lng, label: entry.label });
   }
 
+  function handleLocate() {
+    if (!navigator.geolocation) {
+      setError("geolocation is not available in this browser");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setBusy(false);
+        void handleSearch(
+          `${pos.coords.latitude.toFixed(6)},${pos.coords.longitude.toFixed(6)}`,
+        );
+      },
+      (err) => {
+        setBusy(false);
+        setError(
+          err.code === err.PERMISSION_DENIED
+            ? "location permission denied"
+            : "could not determine your location",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10_000 },
+    );
+  }
+
   async function handleClear() {
     setHistory([]);
     try {
@@ -163,8 +189,20 @@ export default function App() {
         value={query}
         onChange={setQuery}
         onSearch={handleSearch}
+        onLocate={handleLocate}
         busy={busy}
       />
+
+      {/* Polite status line for assistive tech. */}
+      <p className="app__status" role="status" aria-live="polite">
+        {busy
+          ? "acquiring imagery…"
+          : error
+            ? error
+            : target
+              ? `target: ${target.label}`
+              : ""}
+      </p>
 
       <section className="app__body">
         <ImageDisplay
@@ -172,15 +210,11 @@ export default function App() {
           error={error}
           busy={busy}
           source={source}
+          onZoomChange={setZoom}
           overlay={
             target ? (
               <MetadataPanel
-                metadata={buildMetadata(
-                  target,
-                  source,
-                  selectedDate,
-                  DEFAULT_ZOOM,
-                )}
+                metadata={buildMetadata(target, source, selectedDate, zoom)}
               />
             ) : null
           }
@@ -209,6 +243,20 @@ export default function App() {
           onClear={handleClear}
         />
       </section>
+
+      <footer className="app__footer text-dim">
+        <span>imagery: Esri World Imagery + Wayback</span>
+        <span>·</span>
+        <span>geocoding: OpenStreetMap Nominatim</span>
+        <span>·</span>
+        <a
+          href="https://github.com/agntdev/satellitesnap"
+          target="_blank"
+          rel="noreferrer"
+        >
+          source
+        </a>
+      </footer>
     </main>
   );
 }
