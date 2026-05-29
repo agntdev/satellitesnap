@@ -1,15 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SearchBar from "./components/SearchBar";
 import ImageDisplay from "./components/ImageDisplay";
 import HistoryPanel from "./components/HistoryPanel";
 import { geocode, GeocodeError } from "./services/geocode";
+import { historyService } from "./services/history";
 import type { HistoryEntry, Target } from "./types";
-
-let idSeq = 0;
-function nextId(): string {
-  idSeq += 1;
-  return `h${Date.now()}-${idSeq}`;
-}
 
 export default function App() {
   const [query, setQuery] = useState("");
@@ -19,18 +14,26 @@ export default function App() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
-  function recordTarget(next: Target) {
-    setHistory((prev) => {
-      const entry: HistoryEntry = {
-        ...next,
-        id: nextId(),
-        searchedAt: Date.now(),
-      };
-      const deduped = prev.filter(
-        (e) => e.lat !== next.lat || e.lng !== next.lng,
-      );
-      return [entry, ...deduped].slice(0, 20);
-    });
+  // Load persisted history on mount.
+  useEffect(() => {
+    let live = true;
+    historyService
+      .list()
+      .then((items) => live && setHistory(items))
+      .catch(() => {
+        /* non-fatal: start with an empty list */
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  async function recordTarget(next: Target) {
+    try {
+      setHistory(await historyService.add(next));
+    } catch {
+      /* persistence is best-effort; keep the session usable */
+    }
   }
 
   async function handleSearch(raw: string) {
@@ -45,7 +48,7 @@ export default function App() {
       const next = await geocode(raw, controller.signal);
       if (controller.signal.aborted) return;
       setTarget(next);
-      recordTarget(next);
+      await recordTarget(next);
     } catch (err) {
       if (controller.signal.aborted || (err as Error).name === "AbortError") {
         return;
@@ -62,11 +65,21 @@ export default function App() {
 
   function handleSelect(entry: HistoryEntry) {
     abortRef.current?.abort();
+    const next: Target = { lat: entry.lat, lng: entry.lng, label: entry.label };
     setQuery(entry.label);
     setError(null);
     setBusy(false);
-    setTarget({ lat: entry.lat, lng: entry.lng, label: entry.label });
-    recordTarget({ lat: entry.lat, lng: entry.lng, label: entry.label });
+    setTarget(next);
+    void recordTarget(next);
+  }
+
+  async function handleClear() {
+    setHistory([]);
+    try {
+      await historyService.clear();
+    } catch {
+      /* ignore */
+    }
   }
 
   return (
@@ -93,7 +106,7 @@ export default function App() {
         <HistoryPanel
           entries={history}
           onSelect={handleSelect}
-          onClear={() => setHistory([])}
+          onClear={handleClear}
         />
       </section>
     </main>
