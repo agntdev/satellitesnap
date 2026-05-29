@@ -1,21 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import SearchBar from "./components/SearchBar";
 import ImageDisplay from "./components/ImageDisplay";
 import HistoryPanel from "./components/HistoryPanel";
+import { geocode, GeocodeError } from "./services/geocode";
 import type { HistoryEntry, Target } from "./types";
-
-/**
- * Parse a "lat,lng" string into coordinates, or return null. Real geocoding of
- * free-text addresses lands in T04 — for now coordinate input works directly.
- */
-function parseLatLng(input: string): Target | null {
-  const m = input.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
-  if (!m) return null;
-  const lat = Number(m[1]);
-  const lng = Number(m[2]);
-  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
-  return { lat, lng, label: `${lat.toFixed(5)}, ${lng.toFixed(5)}` };
-}
 
 let idSeq = 0;
 function nextId(): string {
@@ -27,18 +15,17 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [target, setTarget] = useState<Target | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const abortRef = useRef<AbortController | null>(null);
 
-  function commitTarget(next: Target) {
-    setTarget(next);
-    setError(null);
+  function recordTarget(next: Target) {
     setHistory((prev) => {
       const entry: HistoryEntry = {
         ...next,
         id: nextId(),
         searchedAt: Date.now(),
       };
-      // Drop any existing entry for the same spot, newest first, cap at 20.
       const deduped = prev.filter(
         (e) => e.lat !== next.lat || e.lng !== next.lng,
       );
@@ -46,20 +33,40 @@ export default function App() {
     });
   }
 
-  function handleSearch(raw: string) {
-    const parsed = parseLatLng(raw);
-    if (!parsed) {
+  async function handleSearch(raw: string) {
+    // Cancel any in-flight geocode so stale results can't clobber a newer one.
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setBusy(true);
+    setError(null);
+    try {
+      const next = await geocode(raw, controller.signal);
+      if (controller.signal.aborted) return;
+      setTarget(next);
+      recordTarget(next);
+    } catch (err) {
+      if (controller.signal.aborted || (err as Error).name === "AbortError") {
+        return;
+      }
       setError(
-        "address geocoding arrives in a later build — enter coordinates as lat,lng for now",
+        err instanceof GeocodeError
+          ? err.message
+          : "unexpected error while resolving location",
       );
-      return;
+    } finally {
+      if (abortRef.current === controller) setBusy(false);
     }
-    commitTarget(parsed);
   }
 
   function handleSelect(entry: HistoryEntry) {
+    abortRef.current?.abort();
     setQuery(entry.label);
-    commitTarget({ lat: entry.lat, lng: entry.lng, label: entry.label });
+    setError(null);
+    setBusy(false);
+    setTarget({ lat: entry.lat, lng: entry.lng, label: entry.label });
+    recordTarget({ lat: entry.lat, lng: entry.lng, label: entry.label });
   }
 
   return (
@@ -78,10 +85,11 @@ export default function App() {
         value={query}
         onChange={setQuery}
         onSearch={handleSearch}
+        busy={busy}
       />
 
       <section className="app__body">
-        <ImageDisplay target={target} error={error} />
+        <ImageDisplay target={target} error={error} busy={busy} />
         <HistoryPanel
           entries={history}
           onSelect={handleSelect}
